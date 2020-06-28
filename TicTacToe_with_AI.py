@@ -1,6 +1,12 @@
+import random
+
+
 class TicTacToe():
     def __init__(self):
-        self.game_state = "Game not finished"
+        self.move, self.game_state = 'X', ''
+        self.players = {'X': 'user', 'O': 'easy'}
+        self.board = [list('   ') for _ in range(3)]
+        random.seed()
         return None
 
     def print_board(self):
@@ -33,15 +39,11 @@ class TicTacToe():
             return True  # winning reverse diagonal
         return False
 
-    def check_board_full(self):
-        occupancy = []
-        for y in range(1, len(self.board) + 1):
-            for x in range(1, len(self.board[0]) + 1):
-                occupancy.append(self.is_occupied([x, y]))
+    def remaining_moves(self):
+        i = [1, 2, 3]
+        return [[x, y] for x in i for y in i if not self.is_occupied([x, y])]
 
-        return all(occupancy)
-
-    def validiate_input(self, user_input):
+    def validiate_user_input(self, user_input):
 
         if user_input.replace(' ', '').isnumeric():
             coords = [int(num) for num in user_input.split()]
@@ -57,37 +59,60 @@ class TicTacToe():
     def is_occupied(self, coords):
         return not (self.board[2 - (coords[1] - 1)][coords[0] - 1] == ' ')
 
-    def start_game(self):
+    def computer_move(self, difficulty):
+        print('Making move level "easy"')
+        return random.choice(self.remaining_moves())
 
-        init_state = input('Enter cells: ').replace('_', ' ')
-        self.board = [list(init_state[i:i + 3]) for i in [0, 3, 6]]
+    def _play(self):
         self.print_board()
 
-        # determine who goes first
-        move = 'O' if init_state.count('X') > init_state.count('O') else 'X'
-
-        while self.game_state == "Game not finished":
-
-            user_input = input('Enter the coordinates: ')
-            if self.validiate_input(user_input):
-                coords = [int(num) for num in user_input.split()]
-
-                if self.is_occupied(coords):
-                    print('This cell is occupied! Choose another one!')
-                    continue
+        while self.game_state == "":
+            if self.players[self.move] == 'user':
+                user_input = input('Enter the coordinates: ')
+                if self.validiate_user_input(user_input):
+                    coords = [int(num) for num in user_input.split()]
                 else:
-                    self.board[2 - (coords[1] - 1)][coords[0] - 1] = move
-                    self.print_board()
-                    if self.check_victory():
-                        self.game_state = f'{move} wins'
-                    elif self.check_board_full():
-                        self.game_state = "Draw"
+                    continue
+            else:
+                coords = self.computer_move(self.players[self.move])
 
-                    print(self.game_state)
-                    break  # for the first step online
+            if self.is_occupied(coords):
+                if self.players[self.move] == 'user':
+                    print('This cell is occupied! Choose another one!')
+                continue
+            else:
+                self.board[2 - (coords[1] - 1)][coords[0] - 1] = self.move
+                self.print_board()
+                if self.check_victory():
+                    self.game_state = f'{self.move} wins'
+                elif len(self.remaining_moves()) == 0:
+                    self.game_state = "Draw"
 
-                move = 'O' if (move == 'X') else 'X'  # for next turn
+                print(self.game_state)
+                self.move = 'O' if (self.move == 'X') else 'X'  # for next turn
+        self.__init__()  # for next game
+        return None
 
+    def check_input_command(self, user_input):
+        words = user_input.split()
+        options = ['user', 'easy']
+        if len(words) != 3:
+            return False
+        if words[0] != 'start':
+            return False
+        if (words[1] not in options) or (words[2] not in options):
+            return False
+        return True
+
+    def start_game(self):
+
+        while True:
+            user_input = input('Input command: ')
+            if self.check_input_command(user_input):
+                break
+            print('Bad parameters!')
+        self.players['X'], self.players['O'] = user_input.split()[1:]
+        self._play()
         return None
 
 

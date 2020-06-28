@@ -20,6 +20,7 @@ class Calculator():
                                '/help': self.__doc__}
 
         # op: ("presidence in RPN", "associativity (Left/Right)")
+        # presidence and associativity used to convert to RPN
         self.operators = {'+': (2, 'L'),
                           '-': (2, 'L'),
                           '*': (3, 'L'),
@@ -31,7 +32,11 @@ class Calculator():
         return None
 
     def _continue_operator_stack_pop(self, operator_stack, tok):
-
+        """
+        only used in 'convert_to_rpn' when determining when to stop removing
+        elements from the op stack. Logic was too complex to stick in the 'if'
+        statement and have it stay readable
+        """
         # top is operator_stack the right
 
         if not operator_stack:  # stack is empty
@@ -131,11 +136,14 @@ class Calculator():
         return expression
 
     def resolve_op(self, op_str):
+        """resolves non-unitary + and - operators to unitary operators"""
         if op_str.count('-') % 2 == 1:
             return '-'
         return '+'
 
     def is_resolvable(self, op_queue):
+        """checks a string of operators to see if it is a non-unitary + or -
+        and therefore that it can be resolved"""
         return not bool(set(op_queue).difference({'+', '-'}))
 
     def parse_input(self, user_input):
@@ -214,6 +222,10 @@ class Calculator():
         return out_queue
 
     def is_valid_expression(self, expression):
+        """parses through user inputs and validates syntax, returning a bool.
+        If an uninitialized variable is present it also sets the instance var
+        unknown_var to True"""
+
         input_queue = self.parse_input(self.replace_variables(expression))
         output_stack = deque()  # top is left
 
@@ -272,6 +284,13 @@ class Calculator():
         return True
 
     def check_assignment(self, string):
+        """
+        checks if an assignment is valid and has proper syntax. if so it adds
+        the name and value of the assignment to the instance namespace.
+        If an uninitialized variable is present it also sets the instance var
+        unknown_var to True.
+        """
+
         assignment_idx = string.index('=')
         var_name = string[:assignment_idx].strip()
         var_expression = string[(assignment_idx+1):]

@@ -1,10 +1,73 @@
 import random
 
 
+class ComputerPlayerEasy():
+
+    def index_board(self, board):
+        for y, row in enumerate(board):
+            for x, elem in enumerate(row):
+                yield (x, y), elem
+
+    def random_vacancy(self, board):
+        board_spots = self.index_board(board)
+        empty_spots = [coords for coords, mark in board_spots if mark == ' ']
+        return random.choice(empty_spots)  # coords
+
+    def make_move(self, board):
+        print('Making move level "easy"')
+        return self.random_vacancy(board)
+
+
+class ComputerPlayerMedium(ComputerPlayerEasy):
+
+    def __init__(self, mark):
+        self.mark = mark
+        return None
+
+    def get_winning_move(self, board, move):
+
+        board_spots = list(self.index_board(board))
+        empty_spots = [coords for coords, mark in board_spots if mark == ' ']
+        all_marks = list(filter(lambda pos: pos[1] == move, board_spots))
+
+        for y in range(len(board)):  # check rows
+            if [coord[1] for coord, _ in all_marks].count(y) == 2:
+                if list(filter(lambda c: c[1] == y, empty_spots)):
+                    return list(filter(lambda c: c[1] == y, empty_spots))[0]
+
+        for x in range(len(board[0])):  # check columns
+            if [coord[0] for coord, _ in all_marks].count(x) == 2:
+                if list(filter(lambda c: c[0] == x, empty_spots)):
+                    return list(filter(lambda c: c[0] == x, empty_spots))[0]
+
+        # check main diagonal
+        if [co[0] == co[1] for co, _ in all_marks].count(True) == 2:
+            if list(filter(lambda c: c[0] == c[1], empty_spots)):
+                return list(filter(lambda c: c[0] == c[1], empty_spots))[0]
+        # check reverse diagonal
+        if [co[0] == 2 - co[1] for co, _ in all_marks].count(True) == 2:
+            if list(filter(lambda c: c[0] == 2 - c[1], empty_spots)):
+                return list(filter(lambda c: c[0] == 2 - c[1], empty_spots))[0]
+        return []
+
+    def make_move(self, board):
+        print('Making move level "medium"')
+        comp_wins = self.get_winning_move(board, self.mark)
+        if comp_wins:
+            return comp_wins
+
+        opp_will_win = self.get_winning_move(board,
+                                             'X' if self.mark == 'O' else 'O')
+        if opp_will_win:
+            return opp_will_win
+
+        return self.random_vacancy(board)
+
+
 class TicTacToe():
     def __init__(self):
         self.move, self.game_state = 'X', ''
-        self.players = {'X': 'user', 'O': 'easy'}
+        self.players = {'X': None, 'O': None}
         self.board = [list('   ') for _ in range(3)]
         random.seed()
         return None
@@ -23,33 +86,6 @@ class TicTacToe():
         if (len(set(elems)) == 1) and (set(elems).pop() in ['X', 'O']):
             return True
         return False
-
-    def two_matchs(self, elems, move):
-        if (elems.count(move) == 2) and (elems.count(' ') == 1):
-            return True
-        return False
-
-    def get_winning_move(self, move):
-        for y in range(len(self.board)):
-            if self.two_matchs(self.board[y], move):
-                for x in range(len(self.board[y])):
-                    if not self.is_occupied([x, y]):
-                        return [x, y]  # winning row
-        for x in range(len(self.board[0])):
-            if self.two_matchs([row[x] for row in self.board], move):
-                for y in range(len(self.board)):
-                    if not self.is_occupied([x, y]):
-                        return [x, y]  # winning column
-
-        if self.two_matchs([self.board[x][x] for x in [0, 1, 2]], move):
-            for x in [0, 1, 2]:
-                if not self.is_occupied([x, x]):
-                    return [x, x]  # winning diagonal
-        if self.two_matchs([self.board[x][2 - x] for x in [0, 1, 2]], move):
-            for x in [0, 1, 2]:
-                if not self.is_occupied([x, 2 - x]):
-                    return [x, 2 - x]  # winning reverse diagonal
-        return []
 
     def check_victory(self):
 
@@ -78,7 +114,12 @@ class TicTacToe():
             if any(coord not in [1, 2, 3] for coord in coords):
                 print('Coordinates should be from 1 to 3!')
                 return False
-            return True
+            else:
+                coords = [coords[0] - 1, 2 - coords[1] + 1]
+                if coords not in self.remaining_moves():
+                    print('This cell is occupied! Choose another one!')
+                    return False
+                return True
 
         print('You should enter numbers!')
         return False
@@ -86,48 +127,34 @@ class TicTacToe():
     def is_occupied(self, coords):
         return not (self.board[coords[1]][coords[0]] == ' ')
 
-    def computer_move(self, difficulty, move):
-        print(f'Making move level "{difficulty}"')
-        if difficulty == 'easy':
-            return random.choice(self.remaining_moves())
-        if difficulty == 'medium':
-            coords = self.get_winning_move(move)  # it can win in 1 move
-            if coords:
+    def user_move(self):
+        while True:
+            user_input = input('Enter the coordinates: ')
+            if self.validiate_user_input(user_input):
+                coords = [int(num) for num in user_input.split()]
+                coords = [coords[0] - 1, 2 - coords[1] + 1]
                 return coords
-            # opponent can win in 1 move
-            coords = self.get_winning_move('O' if (move == 'X') else 'X')
-            if coords:
-                return coords
-            return random.choice(self.remaining_moves())
+        return None
 
-    def _play(self):
+    def run_session(self):
         self.print_board()
 
         while self.game_state == "":
             if self.players[self.move] == 'user':
-                user_input = input('Enter the coordinates: ')
-                if self.validiate_user_input(user_input):
-                    coords = [int(num) for num in user_input.split()]
-                    coords = [coords[0] - 1, 2 - coords[1] + 1]
-                else:
-                    continue
+                coords = self.user_move()
             else:
-                coords = self.computer_move(self.players[self.move], self.move)
+                coords = self.players[self.move].make_move(self.board)
 
-            if self.is_occupied(coords):
-                if self.players[self.move] == 'user':
-                    print('This cell is occupied! Choose another one!')
-                continue
-            else:
-                self.board[coords[1]][coords[0]] = self.move
-                self.print_board()
-                if self.check_victory():
-                    self.game_state = f'{self.move} wins'
-                elif len(self.remaining_moves()) == 0:
-                    self.game_state = "Draw"
+            self.board[coords[1]][coords[0]] = self.move
+            self.print_board()
 
-                print(self.game_state)
-                self.move = 'O' if (self.move == 'X') else 'X'  # for next turn
+            if self.check_victory():
+                self.game_state = f'{self.move} wins'
+            elif len(self.remaining_moves()) == 0:
+                self.game_state = "Draw"
+
+            print(self.game_state)
+            self.move = 'O' if (self.move == 'X') else 'X'  # for next turn
         self.__init__()  # for next game
         return None
 
@@ -149,11 +176,19 @@ class TicTacToe():
             if self.check_input_command(user_input):
                 break
             print('Bad parameters!')
+
         self.players['X'], self.players['O'] = user_input.split()[1:]
-        self._play()
+
+        for mark in self.players:
+            if self.players[mark] == 'easy':
+                self.players[mark] = ComputerPlayerEasy()
+            elif self.players[mark] == 'medium':
+                self.players[mark] = ComputerPlayerMedium(mark)
+
+        self.run_session()
         return None
 
 
 if __name__ == "__main__":
-    game = TicTacToe()
-    game.start_game()
+    game_session = TicTacToe()
+    game_session.start_game()

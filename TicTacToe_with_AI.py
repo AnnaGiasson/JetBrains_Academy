@@ -64,6 +64,82 @@ class ComputerPlayerMedium(ComputerPlayerEasy):
         return self.random_vacancy(board)
 
 
+class ComputerPlayerHard(ComputerPlayerMedium):
+
+    def evaluate_state(self, board):
+
+        board_spots = list(self.index_board(board))
+
+        # check if a player won
+        for move in ['X', 'O']:
+            all_marks = list(filter(lambda pos: pos[1] == move, board_spots))
+
+            for y in range(len(board)):  # check rows
+                if [coord[1] for coord, _ in all_marks].count(y) == 3:
+                    return ('win', move)
+
+            for x in range(len(board[0])):  # check columns
+                if [coord[0] for coord, _ in all_marks].count(x) == 3:
+                    return ('win', move)
+
+            # check main diagonal
+            if [co[0] == co[1] for co, _ in all_marks].count(True) == 3:
+                return ('win', move)
+            # check reverse diagonal
+            if [co[0] == 2 - co[1] for co, _ in all_marks].count(True) == 3:
+                return ('win', move)
+
+        # check if a draw
+        empty_spots = [coords for coords, mark in board_spots if mark == ' ']
+        if not empty_spots:
+            return ('draw', '')
+        else:
+            return ('', '')  # game still in progress
+
+    def minimax(self, board, turn, mode):
+
+        state = self.evaluate_state(board)
+
+        if state[0] == 'win':
+            return 10 if state[1] == self.mark else -10
+        if state[0] == 'draw':
+            return 0
+
+        board_spots = self.index_board(board)
+        empty_spots = [coords for coords, mark in board_spots if mark == ' ']
+        move_scores = {}
+
+        for move in empty_spots:
+            temp_board = [row.copy() for row in board]
+            temp_board[move[1]][move[0]] = turn
+            move_scores[move] = self.minimax(temp_board,
+                                             'O' if turn == 'X' else 'X',
+                                             'min' if mode == 'max' else 'max')
+        if mode == 'max':
+            return max(move_scores.values())
+        elif mode == 'min':
+            return min(move_scores.values())
+
+    def make_move(self, board):
+        print('Making move level "hard"')
+
+        board_spots = self.index_board(board)
+        empty_spots = [coords for coords, mark in board_spots if mark == ' ']
+        move_scores = {}
+
+        for move in empty_spots:
+            temp_board = [row.copy() for row in board]
+            temp_board[move[1]][move[0]] = self.mark
+            move_scores[move] = self.minimax(temp_board,
+                                             'O' if self.mark == 'X' else 'X',
+                                             'min')
+
+        target_score = max(move_scores.values())
+        for move, score in move_scores.items():
+            if score == target_score:
+                return move
+
+
 class TicTacToe():
     def __init__(self):
         self.move, self.game_state = 'X', ''
@@ -160,7 +236,7 @@ class TicTacToe():
 
     def check_input_command(self, user_input):
         words = user_input.split()
-        options = ['user', 'easy', 'medium']
+        options = ['user', 'easy', 'medium', 'hard']
         if len(words) != 3:
             return False
         if words[0] != 'start':
@@ -184,6 +260,8 @@ class TicTacToe():
                 self.players[mark] = ComputerPlayerEasy()
             elif self.players[mark] == 'medium':
                 self.players[mark] = ComputerPlayerMedium(mark)
+            elif self.players[mark] == 'hard':
+                self.players[mark] = ComputerPlayerHard(mark)
 
         self.run_session()
         return None

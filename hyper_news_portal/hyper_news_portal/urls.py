@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .main.views import MainView
+from hyper_news_portal.index_page.views import IndexView
+
 
 urlpatterns = [
+    path('', IndexView.as_view()),
     path('admin/', admin.site.urls),
-    path('', MainView.as_view()),
 ]

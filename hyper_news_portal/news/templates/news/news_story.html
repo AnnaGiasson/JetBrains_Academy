@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ story_info.title }}</title>
+    </head>
+    <body>
+        <h2>{{ story_info.title }}</h2>
+        <p>{{ story_info.created|date:"Y-m-d H:i:s" }}</p>
+        <p>{{ story_info.text|default_if_none:"" }}</p>
+        <a href="/news/">News Page</a>
+    </body>
+</html>

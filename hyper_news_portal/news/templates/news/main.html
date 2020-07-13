@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>News</title>
+    </head>
+    <body>
+        <h2>Hyper news</h2>
+
+        <h4>{{ last_updated }}</h4>
+        <ul>
+            {% for story_info in news_stories|dictsortreversed:"created" %}
+                <li>
+                    <h4><a href="/news/{{story_info.link}}/"> {{ story_info.title }}</a></h4>
+                </li>
+            {% endfor %}
+        </ul>
+
+<!--        <a href="/news/">News Page</a>-->
+        <a target="_blank" href="/news/create/">Create News</a>
+    </body>
+</html>

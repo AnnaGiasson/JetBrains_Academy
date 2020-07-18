@@ -3,20 +3,31 @@
     <head>
         <meta charset="UTF-8">
         <title>News</title>
+
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'css/base.css' %}">
     </head>
     <body>
         <h2>Hyper news</h2>
-
-        <h4>{{ last_updated }}</h4>
+        <form action="/news/" method="get">{% csrf_token %}
+            <input name="q">
+             <button type="submit">Search</button>
+        </form>
+        {% regroup news_stories|dictsortreversed:"created" by render_date as news_stories_grouped %}
         <ul>
-            {% for story_info in news_stories|dictsortreversed:"created" %}
-                <li>
-                    <h4><a href="/news/{{story_info.link}}/"> {{ story_info.title }}</a></h4>
-                </li>
-            {% endfor %}
+        {% for date in news_stories_grouped %}
+            <li><h4>{{ date.grouper }}</h4>
+                <ul>
+                    {% for story in date.list %}
+                    <li><a href="/news/{{story.link}}/"> {{ story.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+
+        {% endfor %}
         </ul>
 
-<!--        <a href="/news/">News Page</a>-->
+        <a href="/news/">News Page</a>
         <a target="_blank" href="/news/create/">Create News</a>
     </body>
 </html>

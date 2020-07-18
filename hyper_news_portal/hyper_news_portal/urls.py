@@ -1,4 +1,4 @@
-"""hyper_news_portal URL Configuration
+"""hypernews URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/2.2/topics/http/urls/
@@ -15,13 +15,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path
-from news.views import (WelcomePageView, NewsStoryView,
-                        MainPageView, CreateNewsView)
+from django.conf.urls.static import static
+from django.conf import settings
+from news.views import (WelcomePageView, NewsStoryView, MainPageView,
+                        CreateNewsView)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', WelcomePageView.as_view()),
     re_path(r'news\/(?P<link_number>\d+)', NewsStoryView.as_view()),
-    path('news/', MainPageView.as_view()),
-    path('news/create/', CreateNewsView.as_view()),
+    # path('news/', MainPageView.as_view()),
+    re_path(r'news\/?$', MainPageView.as_view()),
+    re_path(r'news/create\/?$', CreateNewsView.as_view()),
 ]
+
+urlpatterns += static(settings.STATIC_URL)
